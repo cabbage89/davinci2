@@ -18,7 +18,7 @@
  * >>
  */
 
-import React from 'react'
+import React, { createRef, RefObject } from 'react'
 import { Icon, Tooltip, Popover } from 'antd'
 const styles = require('../Dashboard.less')
 import { IProject } from 'containers/Projects/types'
@@ -43,7 +43,10 @@ interface IDashboardActionState {
 }
 
 export class DashboardAction extends React.PureComponent<IDashboardActionProps, IDashboardActionState> {
-  constructor (props) {
+
+  private container: RefObject<HTMLDivElement> = createRef()
+
+  constructor(props) {
     super(props)
     this.state = {
       popoverVisible: false
@@ -68,21 +71,53 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     onInitOperateMore(item, type)
   }
 
-  private computeTitleWidth (text: string, wrapperWidth: number) {
+  private computeTitleWidth(text: string, wrapperWidth: number) {
     const textWidth = getTextWidth(text)
     const textLength = text.length
     return text
   }
 
-  public render () {
+  private changeDashboard = (event) => {
+    event.preventDefault()
+    const { initChangeDashboard } = this.props
+    const id = Number(this.container.current.dataset.did)
+    // metaKey兼容Mac
+    if (event.ctrlKey || event.metaKey) {
+      if (event.button === 0) {
+        this.operateMore({ id }, 'link')(event)
+      }
+    } else {
+      initChangeDashboard(id)(event)
+    }
+  }
+
+  public componentDidMount() {
+    if (this.container.current) {
+      this.container.current.addEventListener('mousedown', this.changeDashboard, false)
+    }
+  }
+
+  public componentWillUnmount() {
+    if (this.container.current) {
+      this.container.current.removeEventListener('mousedown', this.changeDashboard, false)
+    }
+  }
+
+  public render() {
     const {
       currentProject,
       depth,
       item,
-      initChangeDashboard,
       splitWidth
     } = this.props
     const { popoverVisible } = this.state
+
+    const OpenUrlActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz')(Li)
+    const openUrlAction = (
+      <OpenUrlActionButton onClick={this.operateMore(item, 'link')}>
+        <Icon type="link" /> 新窗口打开
+      </OpenUrlActionButton>
+    )
 
     const EditActionButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'viz')(Li)
     const editAction = (
@@ -94,7 +129,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const DownloadButton = ShareDownloadPermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>>(currentProject, 'download')(Li)
 
     const downloadAction = (
-      <DownloadButton style={{cursor: 'pointer'}} onClick={this.operateMore(item, 'download')}>
+      <DownloadButton style={{ cursor: 'pointer' }} onClick={this.operateMore(item, 'download')}>
         <Icon type="download" className={styles.swap} /> 下载
       </DownloadButton>
     )
@@ -116,6 +151,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
 
     const ulActionAll = (
       <ul className={styles.menu}>
+        <li>{openUrlAction}</li>
         <li>{editAction}</li>
         {/* <li>{downloadAction}</li> */}
         <li>{moveAction}</li>
@@ -125,6 +161,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
 
     const ulActionPart = (
       <ul className={styles.menu}>
+        <li>{openUrlAction}</li>
         <li>{editAction}</li>
         {/* <li>{downloadAction}</li> */}
         <li>{moveAction}</li>
@@ -168,10 +205,10 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
           {
             item.type === 0
               ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{computeTitleWidth(item.name, computeWidth)}</h4>
-              : <span className={styles.dashboardTitle} style={{width: titleWidth}} onClick={initChangeDashboard(item.id)}>
-                  <Icon type={`${item.type === 2 ? 'table' : 'dot-chart'}`} />
-                  <span className={styles.itemName}>{computeTitleWidth(item.name, computeWidth)}</span>
-                </span>
+              : <span className={styles.dashboardTitle} style={{ width: titleWidth }} ref={this.container} data-did={item.id}>
+                <Icon type={`${item.type === 2 ? 'table' : 'dot-chart'}`} />
+                <span className={styles.itemName}>{computeTitleWidth(item.name, computeWidth)}</span>
+              </span>
           }
           {ulPopover}
         </Tooltip>
@@ -180,7 +217,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
   }
 }
 
-function Li (props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>) {
+function Li(props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>) {
   return (
     <span {...props} >{props.children}</span>
   )

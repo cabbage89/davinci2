@@ -21,11 +21,11 @@ interface IXaxisProps {
 export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
   private container: HTMLDivElement = null
 
-  public componentDidMount () {
+  public componentDidMount() {
     this.renderAxis()
   }
 
-  public componentDidUpdate () {
+  public componentDidUpdate() {
     this.renderAxis()
   }
 
@@ -43,7 +43,10 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
       showTitleAndUnit,
       titleFontFamily,
       titleFontSize,
-      titleColor
+      titleColor,
+      showInterval,
+      xAxisInterval,
+      xAxisRotate
     } = dimetionAxis === 'col' ? chartStyles.xAxis : chartStyles.yAxis
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
@@ -138,9 +141,12 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
                   color: labelColor,
                   fontFamily: labelFontFamily,
                   fontSize: labelFontSize,
-                  interval: 0,
-                  rotate: elementSize <= PIVOT_XAXIS_ROTATE_LIMIT ? -90 : 0,
-                  formatter: getXaxisLabel(elementSize * .8)
+                  interval: showInterval ? xAxisInterval : 0,
+                  rotate: xAxisRotate < 0
+                    ? 0
+                    : xAxisRotate > 90
+                      ? 90 : xAxisRotate,
+                  formatter: '{value}'
                 },
                 axisLine: {
                   show: showLine,
@@ -200,17 +206,17 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
     })
   }
 
-  public render () {
+  public render() {
     const { width, data } = this.props
 
     const blocks = data.map((block) => (
-      <div key={block.key} style={{width: block.length}} />
+      <div key={block.key} style={{ width: block.length }} />
     ))
 
     return (
       <div
         className={styles.xAxis}
-        style={{width}}
+        style={{ width }}
         ref={(f) => this.container = f}
       >
         {blocks}

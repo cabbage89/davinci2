@@ -22,6 +22,7 @@ import { IChartProps } from '../../components/Chart'
 import { decodeMetricName } from '../../components/util'
 import { EChartOption } from 'echarts'
 import { getFormattedValue } from '../../components/Config/Format'
+import { getFieldAlias } from '../../components/Config/Field'
 
 export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
@@ -127,7 +128,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       // animationDurationUpdate: 1000,
       data: [{
         value: data.length ? data[0][`${m.agg}(${decodedMetricName})`] : 0,
-        name: m.field.alias || decodedMetricName
+        name: getFieldAlias(m.field, {}) || decodedMetricName
       }],
       axisLine: {
         lineStyle: {
