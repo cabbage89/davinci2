@@ -29,7 +29,7 @@ import {
   getDimetionAxisOption,
   getCartesianChartReferenceOptions
 } from './util'
-import { getFormattedValue } from 'containers/Widget/components/Config/Format'
+import { FieldFormatTypes, getFormattedValue } from 'containers/Widget/components/Config/Format'
 import { getFieldAlias } from 'containers/Widget/components/Config/Field'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
 import { getMetricsExtendMinAndMax } from './helper'
@@ -48,7 +48,7 @@ export default function (chartProps: IChartProps, drillOptions) {
 
   const { stack, smooth, step, symbol, label } = spec
 
-  const { yAxisLeft, yAxisRight, yAxisSplitNumber } = doubleYAxis
+  const { yAxisLeft, yAxisRight, yAxisSplitNumber, leftExtentMin, leftExtentMax, leftInterval, rightExtentMin, rightExtentMax, rightInterval } = doubleYAxis
 
   const { showLabel } = xAxis
 
@@ -56,7 +56,11 @@ export default function (chartProps: IChartProps, drillOptions) {
     showVerticalLine,
     verticalLineColor,
     verticalLineSize,
-    verticalLineStyle
+    verticalLineStyle,
+    showHorizontalLine,
+    horizontalLineColor,
+    horizontalLineSize,
+    horizontalLineStyle
   } = splitLine
 
   const labelOption = {
@@ -74,36 +78,37 @@ export default function (chartProps: IChartProps, drillOptions) {
   const xAxisData = showLabel ? data.map((d) => d[cols[0].name]) : []
   const seriesData = secondaryMetrics
     ? getAixsMetrics(
-        'metrics',
-        metrics,
+      'metrics',
+      metrics,
+      data,
+      stack,
+      labelOption,
+      references,
+      selectedItems,
+      { key: 'yAxisLeft', type: yAxisLeft }
+    ).concat(
+      getAixsMetrics(
+        'secondaryMetrics',
+        secondaryMetrics,
         data,
         stack,
         labelOption,
         references,
         selectedItems,
-        { key: 'yAxisLeft', type: yAxisLeft }
-      ).concat(
-        getAixsMetrics(
-          'secondaryMetrics',
-          secondaryMetrics,
-          data,
-          stack,
-          labelOption,
-          references,
-          selectedItems,
-          { key: 'yAxisRight', type: yAxisRight }
-        )
+        { key: 'yAxisRight', type: yAxisRight }
       )
+    )
     : getAixsMetrics(
-        'metrics',
-        metrics,
-        data,
-        stack,
-        labelOption,
-        references,
-        selectedItems,
-        { key: 'yAxisLeft', type: yAxisLeft }
-      )
+      'metrics',
+      metrics,
+      data,
+      stack,
+      labelOption,
+      references,
+      selectedItems,
+      { key: 'yAxisLeft', type: yAxisLeft }
+    )
+
   const seriesObj = {
     series: seriesData.map((series) => {
       if (series.type === 'line') {
@@ -145,6 +150,14 @@ export default function (chartProps: IChartProps, drillOptions) {
     lineSize: verticalLineSize,
     lineStyle: verticalLineStyle
   }
+  const yAxisSplitNumberConfig = {
+    show: showHorizontalLine,
+    lineStyle: {
+      color: horizontalLineColor,
+      width: Number(horizontalLineSize),
+      type: horizontalLineStyle
+    }
+  }
   const allMetrics = secondaryMetrics
     ? [].concat(metrics).concat(secondaryMetrics)
     : metrics
@@ -155,8 +168,8 @@ export default function (chartProps: IChartProps, drillOptions) {
     stack,
     yAxisSplitNumber
   )
-  const [leftExtentMin, leftExtentMax, leftInterval] = leftY
-  const [rightExtentMin, rightExtentMax, rightInterval] = rightY
+  const [tempLeftExtentMin, tempLeftExtentMax, tempLeftInterval] = leftY
+  const [tempRightExtentMin, tempRightExtentMax, tempRightInterval] = rightY
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -175,7 +188,7 @@ export default function (chartProps: IChartProps, drillOptions) {
           }
           acc.push(
             getFieldAlias(allMetrics[seriesIndex].field, {}) ||
-              decodeMetricName(allMetrics[seriesIndex].name)
+            decodeMetricName(allMetrics[seriesIndex].name)
           )
           acc.push(
             ': ',
@@ -192,9 +205,9 @@ export default function (chartProps: IChartProps, drillOptions) {
       {
         type: 'value',
         key: 'yAxisIndex0',
-        min: rightExtentMin,
-        max: rightExtentMax,
-        interval: +rightInterval,
+        min: rightExtentMin ? rightExtentMin : tempRightExtentMin,
+        max: rightExtentMax ? rightExtentMax : tempRightExtentMax,
+        interval: +rightInterval ? +rightInterval : tempRightInterval,
         position: 'right',
         showTitleAndUnit: true,
         name: getYAxisName(secondaryMetrics),
@@ -206,14 +219,15 @@ export default function (chartProps: IChartProps, drillOptions) {
           fontFamily: 'PingFang SC',
           fontSize: 12
         },
+        splitLine: yAxisSplitNumberConfig,
         ...getDoubleYAxis(doubleYAxis)
       },
       {
         type: 'value',
         key: 'yAxisIndex1',
-        min: leftExtentMin,
-        max: leftExtentMax,
-        interval: +leftInterval,
+        min: leftExtentMin ? leftExtentMin : tempLeftExtentMin,
+        max: leftExtentMax ? leftExtentMax : tempLeftExtentMax,
+        interval: +leftInterval ? +leftInterval : tempLeftInterval,
         position: 'left',
         showTitleAndUnit: true,
         name: getYAxisName(metrics),
@@ -225,6 +239,7 @@ export default function (chartProps: IChartProps, drillOptions) {
           fontFamily: 'PingFang SC',
           fontSize: 12
         },
+        splitLine: yAxisSplitNumberConfig,
         ...getDoubleYAxis(doubleYAxis)
       }
     ],
@@ -263,8 +278,8 @@ export function getAixsMetrics(
     const itemData = data.map((g, index) => {
       const itemStyle =
         selectedItems &&
-        selectedItems.length &&
-        selectedItems.some((item) => item === index)
+          selectedItems.length &&
+          selectedItems.some((item) => item === index)
           ? { itemStyle: { normal: { opacity: 1, borderWidth: 6 } } }
           : null
       return {
@@ -272,18 +287,27 @@ export function getAixsMetrics(
         ...itemStyle
       }
     })
+    const labelOpt = m.format.formatType !== FieldFormatTypes.Default ?
+      ({
+        label: {
+          ...labelOption.label.normal,
+          formatter: (params): string => {
+            return getFormattedValue(params.value, m.format)
+          }
+        }
+      }) : labelOption
     seriesAxis.push({
       name: decodedMetricName,
       type:
         axisPosition && axisPosition.type
           ? axisPosition.type
           : type === 'metrics'
-          ? 'line'
-          : 'bar',
+            ? 'line'
+            : 'bar',
       ...stackOption,
       yAxisIndex: type === 'metrics' ? 1 : 0,
       data: itemData,
-      ...labelOption,
+      ...labelOpt,
       ...(amIndex === axisMetrics.length - 1 && referenceOptions),
       itemStyle: {
         normal: {

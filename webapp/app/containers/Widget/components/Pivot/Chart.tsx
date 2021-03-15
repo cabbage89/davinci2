@@ -122,12 +122,22 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       verticalLineSize = '',
       verticalLineColor = ''
     } = this.props.chartStyles.splitLine || {}
+    const { showInterval, xAxisInterval, xAxisRotate } = this.props.chartStyles.xAxis
 
     return {
       gridIndex: index,
       type,
       axisTick: { show: false },
-      axisLabel: { show: false },
+      axisLabel: showInterval || xAxisRotate ?
+        {
+          show: true,
+          interval: showInterval ? xAxisInterval : 0,
+          rotate: xAxisRotate < 0
+            ? 0
+            : xAxisRotate > 90
+              ? 90 : xAxisRotate
+        } :
+        { show: false },
       ...type === 'value' && {
         axisLine: { show: false }
       },
@@ -163,6 +173,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       verticalLineColor = ''
     } = this.props.chartStyles.splitLine || {}
 
+    const { showInterval, xAxisInterval, xAxisRotate, min, max } = this.props.chartStyles.yAxis
+
     return {
       gridIndex: index,
       type: 'value',
@@ -175,7 +187,16 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
         }
       },
       axisTick: { show: false },
-      axisLabel: { show: false },
+      axisLabel: showInterval || xAxisRotate ?
+      {
+        show: true,
+        interval: showInterval ? xAxisInterval : 0,
+        rotate:  xAxisRotate < 0
+          ? 0
+          : xAxisRotate > 90
+            ? 90 : xAxisRotate
+      } :
+      { show: false },
       splitLine: {
         show: coordinate === 'cartesian' && (isScatterXAxis ? showVerticalLine : showHorizontalLine),
         lineStyle: {
@@ -184,7 +205,9 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           type: isScatterXAxis ? verticalLineStyle : horizontalLineStyle
         }
       },
-      ...metricAxisConfig
+      min: min ? min : metricAxisConfig.min,
+      max: max ? max : metricAxisConfig.max
+      // ...metricAxisConfig
     }
   }
 

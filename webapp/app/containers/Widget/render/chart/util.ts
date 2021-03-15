@@ -449,8 +449,8 @@ export function getGridPositions(
       grid[val] +=
         legendPosition === val
           ? ['top', 'bottom'].includes(val)
-            ? 64
-            : 64 +
+            ? 24
+            : 24 +
               Math.max(
                 ...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`))
               )

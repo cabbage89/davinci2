@@ -549,6 +549,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   private onOperateMore = (item, type) => {
     if (type === 'download') {
       this.props.onInitiateDownloadTask(item.id, item.type === 0 ? DownloadTypes.Folder : DownloadTypes.Dashboard, [])
+    } else if (type === 'link') {
+      const { match } = this.props
+      const { projectId, portalId } = match.params
+      const path = `${window.location.protocol}//${window.location.host}/#/project/${projectId}/portal/${portalId}/dashboard/${item.id}`
+      window.open(path, '')
     } else {
       this.setState({
         formType: type

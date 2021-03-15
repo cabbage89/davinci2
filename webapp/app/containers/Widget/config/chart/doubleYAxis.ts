@@ -57,6 +57,12 @@ const doubleYAxis: IChartInfo = {
     doubleYAxis: {
       yAxisLeft: 'line',
       yAxisRight: 'bar',
+      leftExtentMin: null,
+      leftExtentMax: null,
+      leftInterval: null,
+      rightExtentMin: null,
+      rightExtentMax: null,
+      rightInterval: null,
       yAxisSplitNumber: 5,
       dataZoomThreshold: 0,
       showLine: true,

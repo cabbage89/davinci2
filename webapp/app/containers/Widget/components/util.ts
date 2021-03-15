@@ -335,6 +335,9 @@ export function getChartPieces(total, lines) {
     return lines
   }
   const eachLine = total / lines
+  if (isNaN(eachLine)) {
+    return 0
+  }
   const pct =
     Math.abs(eachLine - PIVOT_CHART_POINT_LIMIT) / PIVOT_CHART_POINT_LIMIT
   return pct < 0.2
@@ -820,10 +823,10 @@ export function getChartLabel(seriesData, labelItem) {
         : record[labelItem.name] || ''
       : Array.isArray(record)
       ? record.reduce(
-          (sum, r) =>
-            sum + r[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`],
-          0
-        )
+        (sum, r) =>
+          sum + r[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`],
+        0
+      )
       : record[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`] || 0
   }
 }

@@ -191,7 +191,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
         <Col span={12}>标题旋转</Col>
         <Col span={10}>
           <InputNumber
-            placeholder="width"
+            placeholder="yAxisRotate"
             className={styles.blockElm}
             value={nameRotate}
             onChange={this.inputNumberChange('nameRotate')}

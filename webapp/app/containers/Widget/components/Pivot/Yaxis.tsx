@@ -42,7 +42,12 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
       showTitleAndUnit = false,
       titleFontFamily = '',
       titleFontSize = '',
-      titleColor = ''
+      titleColor = '',
+      nameRotate = 90,
+      nameLocation = 'middle',
+      nameGap = 30,
+      min,
+      max
     } = dimetionAxis === 'col' ? (chartStyles.yAxis || {}) : chartStyles.xAxis
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
@@ -113,8 +118,9 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
 
             const axisTitle = showTitleAndUnit && {
               name: decodeMetricName(m.name),
-              nameLocation: 'middle',
-              nameGap: 45,
+              nameLocation,
+              nameGap,
+              nameRotate,
               nameTextStyle: {
                 color: titleColor,
                 fontFamily: titleFontFamily,
@@ -140,7 +146,9 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                 type: 'value',
                 ...axisTitle,
                 ...metricAxisStyle,
-                ...metricAxisConfig[m.name].yAxis
+                // ...metricAxisConfig[m.name].yAxis,
+                min: min ? min : metricAxisConfig[m.name].yAxis.min,
+                max: max ? max : metricAxisConfig[m.name].yAxis.max
               })
             } else {
               xAxis.push({
