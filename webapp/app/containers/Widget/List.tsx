@@ -194,15 +194,21 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
           }}
         />
       ) : (
-          text
-        ))
+        text
+      ))
     }
   });
 
   const mappingIcon = (widgetConfig: IWidgetConfigBase) => {
     const selectedChart = widgetConfig.selectedChart
-    const mode = widgetlibs[widgetConfig.mode]
-    return mode[selectedChart - 1].icon
+    const widgets = widgetlibs[widgetConfig.mode]
+    let widget = widgets[selectedChart - 1];
+    if (widget) {
+      return widget.icon
+    } else {
+      console.warn(`${selectedChart}在${widgets}中未找到对应的widget`)
+      return ""
+    }
   }
 
   const columns: Array<ColumnProps<IWidgetFormed>> = [
@@ -214,7 +220,7 @@ const WidgetList: React.FC<RouteComponentWithParams> = (props) => {
       render: (_, record) => (
         <div>
           <i className={`iconfont ${mappingIcon(record.config)}`}></i>
-          <span style={{marginLeft: 8}}>{record.name}</span>
+          <span style={{ marginLeft: 8 }}>{record.name}</span>
         </div>
       )
     },
